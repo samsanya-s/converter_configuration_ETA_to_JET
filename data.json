@@ -1,0 +1,421 @@
+{
+    "POSSIBLE_TYPES": [
+        "String",
+        "Date",
+        "Year",
+        "Boolean",
+        "Dictionary",
+        "Number",
+        "DateTime",
+        "DataProvider",
+        "Attachment",
+        "URL",
+        "GeoData",
+        "NestedEntity",
+        "LeftType",
+        "RightType"
+    ],
+    "MAIN_TAG_TYPES": [
+        "MetaProperty",
+        "MetaPropertyRange",
+        "MetaPropertyList",
+        "MetaPropertyTable"
+    ],
+    "PROPERTIES_TYPE_ENTITY": [
+        "NestedEntity",
+        "ObjectOfControl"
+    ],
+    "MAPPING_TYPES": {
+        "String": {
+            "MaxLength": [
+                "maxVal",
+                "1000"
+            ],
+            "DefaultValue": [
+                "defaultValue",
+                null
+            ],
+            "New": [
+                [
+                    "minVal",
+                    "0"
+                ]
+            ]
+        },
+        "Date": {
+            "MinDate": [
+                "minVal",
+                "1900-01-01"
+            ],
+            "MaxDate": [
+                "maxVal",
+                "2100-12-31"
+            ],
+            "DefaultValue": [
+                "defaultValue",
+                null
+            ],
+            "New": []
+        },
+        "Year": {
+            "MinYear": [
+                "minVal",
+                "1800"
+            ],
+            "MaxYear": [
+                "maxVal",
+                "2200"
+            ],
+            "DefaultValue": [
+                "defaultValue",
+                null
+            ],
+            "New": [
+                [
+                    "maxValIsStrict",
+                    "false"
+                ],
+                [
+                    "minValIsStrict",
+                    "false"
+                ]
+            ]
+        },
+        "Boolean": {
+            "DefaultValue": [
+                "defaultValue",
+                null
+            ],
+            "New": []
+        },
+        "Dictionary": {
+            "DictionaryCode": [
+                "resourceName",
+                null
+            ],
+            "DefaultValue": [
+                "defaultValue",
+                null
+            ],
+            "New": [
+                [
+                    "onDelete",
+                    "EXCEPTION"
+                ]
+            ]
+        },
+        "Number": {
+            "Precision": [
+                "scale",
+                "0"
+            ],
+            "MinValue": [
+                "minVal",
+                "0"
+            ],
+            "MaxValue": [
+                "maxVal",
+                "10000"
+            ],
+            "DefaultValue": [
+                "defaultValue",
+                null
+            ],
+            "New": [
+                [
+                    "maxValIsStrict",
+                    "false"
+                ],
+                [
+                    "minValIsStrict",
+                    "false"
+                ],
+                [
+                    "roundingMode",
+                    "TRUNCATE"
+                ]
+            ]
+        },
+        "DateTime": {
+            "MinDateTime": [
+                "minVal",
+                "1900-01-01T08:00:00"
+            ],
+            "MaxDateTime": [
+                "maxVal",
+                "2100-12-31T08:00:00"
+            ],
+            "DefaultValue": [
+                "defaultValue",
+                null
+            ],
+            "New": []
+        },
+        "DataProvider": {
+            "Data": [
+                "resourceName",
+                null
+            ],
+            "OnDelete": [
+                "onDelete",
+                "EXCEPTION"
+            ],
+            "New": []
+        },
+        "Attachment": {
+            "Ext": [
+                "fileExtensions",
+                null
+            ],
+            "MaxSize": [
+                "fileMaxSize",
+                null
+            ],
+            "FilesTotalUploadLimit": [
+                "filesMaxCount",
+                null
+            ],
+            "DescriptionRequired": [
+                "descriptionRequired",
+                "false"
+            ],
+            "New": [],
+            "toForm": [
+                "ShowDescription"
+            ]
+        },
+        "URL": {
+            "MaxLenght": [
+                "maxVal",
+                null
+            ],
+            "New": []
+        },
+        "GeoData": {
+            "New": []
+        },
+        "NestedEntity": {
+            "EntityType": [
+                "dynamicObjectType",
+                null
+            ],
+            "New": [
+                [
+                    "onDelete",
+                    "EXCEPTION"
+                ],
+                [
+                    "resourceName",
+                    "nested-entity-object"
+                ]
+            ]
+        },
+        "LeftType": {
+            "MinDate": [
+                "minVal",
+                "1900-01-01"
+            ],
+            "MaxDate": [
+                "maxVal",
+                "2100-12-31"
+            ],
+            "DefaultValue": [
+                "defaultValue",
+                null
+            ],
+            "New": []
+        },
+        "RightType": {
+            "MinDate": [
+                "minVal",
+                "1900-01-01"
+            ],
+            "MaxDate": [
+                "maxVal",
+                "2100-12-31"
+            ],
+            "DefaultValue": [
+                "defaultValue",
+                null
+            ],
+            "New": []
+        }
+    },
+    "MAPPING_TYPE_NAME_ITEM": {
+        "String": "StringDDT",
+        "Date": "DateDDT",
+        "Year": "IntegerDDT",
+        "Boolean": "BooleanDDT",
+        "Dictionary": "ResourceLinkDictDDT",
+        "Number": "DecimalDDT",
+        "DateTime": "DateTimeDDT",
+        "DataProvider": "ResourceLinkDDT",
+        "Attachment": "AttachmentListDDT",
+        "URL": "URLDDT",
+        "GeoData": "GeoDDT",
+        "NestedEntity": "ResourceLinkNETListDDT"
+    },
+    "MAPPING_TYPES_NAME_RANGE": {
+        "LeftType": "DateRangeDDT",
+        "RightType": "DateRangeDDT"
+    },
+    "MAPPING_TYPES_NAME_LIST": {
+        "DataProvider": "ResourceLinkListDDT",
+        "Dictionary": "ResourceLinkDictListDDT"
+    },
+    "MAPPING_ENTITIES_NAME": {
+        "NestedEntity": "nested-entity-object",
+        "ObjectOfControl": "dynamic-entity"
+    },
+    "MAPPING_ENTITIES_NAME_FORM": {
+        "NestedEntity": "ControlObjectNestedEntity",
+        "ObjectOfControl": "ControlObject"
+    },
+    "MAPPING_NAME_CONSTRUCTOR": {
+        "NestedEntity": "EntityFormConstructor",
+        "ObjectOfControl": "DefaultFormConstructor"
+    },
+    "MAPPING_TYPE_INPUT": {
+        "StringDDT": "TextInput",
+        "DateDDT": "DateInput",
+        "IntegerDDT": "IntegerInput",
+        "BooleanDDT": "CheckBoxInput",
+        "ResourceLinkDictDDT": "SingleDictionarySelectForm",
+        "DecimalDDT": "NumberInput",
+        "DateTimeDDT": "DateTimeInput",
+        "ResourceLinkDDT": "SingleAutoCompleteInput",
+        "AttachmentListDDT": "AttachmentInput",
+        "URLDDT": "URLInput",
+        "GeoDDT": "GeoData",
+        "ResourceLinkListDDT": "MultiAutoCompleteInput",
+        "ResourceLinkDictListDDT": "MultiDictionarySelectForm",
+        "ResourceLinkNETListDDT": "NestedEntityTableInput",
+        "DateRangeDDT": "DateRangeInput",
+        "Text": "TransientLabel",
+        "TextWithStatus": "TransientWithStatusLabel",
+        "URL": "TransientWithURLLabel",
+        "RunProcess": "ButtonRunProcess",
+        "RunReport": "ButtonRunReport",
+        "Button": "ButtonStub"
+    },
+    "MAPPING_TAG_FORM": {
+        "StringDDT": "CommonItem",
+        "DateDDT": "CommonItem",
+        "IntegerDDT": "CommonItem",
+        "BooleanDDT": "CommonItem",
+        "ResourceLinkDictDDT": "DropDownItem",
+        "DecimalDDT": "CommonItem",
+        "DateTimeDDT": "DateTimeInput",
+        "ResourceLinkDDT": "AutoCompleteInputItem",
+        "AttachmentListDDT": "AttachmentItem",
+        "URLDDT": "URLInputItem",
+        "GeoDDT": "GeoDataItem",
+        "ResourceLinkListDDT": "AutoCompleteInputItem",
+        "ResourceLinkDictListDDT": "DropDownItem",
+        "ResourceLinkNETListDDT": "NestedEntityTableInputItem",
+        "DateRangeDDT": "CommonItem",
+        "Text": "TransientLabel",
+        "TextWithStatus": "TransientLabel",
+        "URL": "TransientLabel",
+        "RunProcess": "ButtonItem",
+        "RunReport": "ButtonItem",
+        "Button": "ButtonItem",
+        "Label": "StaticLabel"
+    },
+    "MAPPING_PARAMETRS": {
+        "StringDDT": [
+            "maxRows"
+        ],
+        "DateDDT": [],
+        "IntegerDDT": [],
+        "BooleanDDT": [],
+        "ResourceLinkDictDDT": [
+            "dictionaryType"
+        ],
+        "DecimalDDT": [],
+        "DateTimeDDT": [],
+        "ResourceLinkDDT": [
+            "journalCode"
+        ],
+        "AttachmentListDDT": [],
+        "URLDDT": [],
+        "GeoDDT": [],
+        "ResourceLinkNETListDDT": [
+            "enableObjectCreation"
+        ],
+        "ResourceLinkDictListDDT": [
+            "dictionaryType"
+        ],
+        "ResourceLinkListDDT": [
+            "journalCode"
+        ],
+        "DateRangeDDT": [],
+        "Text": ["maxRows", "valueGetterCode", "valueTemplate"],
+        "TextWithStatus": ["maxRows", "valueGetterCode", "valueTemplate", "colorGetterType", "colorGetterCode"],
+        "URL": ["maxRows", "valueGetterCode", "valueTemplate"],
+        "RunProcess": [],
+        "RunReport": [],
+        "Button": []
+    },
+    "MAPPING_RESOURCE_NAME": {
+        "User": "user",
+        "Labor": "labor",
+        "Documents": "documents",
+        "ControlObject": "object-of-control",
+        "Contragent": "contragent",
+        "NestedEntity": "nested-entity-type"
+    },
+    "MAPPING_JOURNALS": {
+        "user": "AccessGroupEmployeeJournal",
+        "labor": "LaborJournal",
+        "object-of-control": "ObjectOfControlJournal",
+        "contragent": "ContragentsJournal",
+        "nested-entity-type": "NestedEntityTypesJournal"
+    },
+    "MAPPING_FUNCTIONAL_TAB": {
+        "mainForCustom": "mainForCustom",
+        "realizeInfoForCustom": "realizeInfoForCustom",
+        "auctionStages": "auctionStages",
+        "enlargedNetworkGraph": "enlargedNetworkGraph",
+        "warrantyCases": "warrantyCases",
+        "operationalReport": "operationalReport",
+        "photoReports": "photoReports",
+        "claims": "claims",
+        "capacities": "capacities",
+        "indicators": "indicators",
+        "groupValues": "groupValues",
+        "planing": "planing",
+        "planSchedule": "planSchedule",
+        "documents": "documents",
+        "contracts": "contracts",
+        "buildControl": "buildControl",
+        "funding": "funding",
+        "activityValues": "activityValues",
+        "geoData": "geoData",
+        "contacts": "contacts",
+        "urlLinks": "urlLinks",
+        "headOrders": "headOrders",
+        "hqDecisions": "hqDecisions",
+        "feedback": "feedback",
+        "webcam": "webcam",
+        "stead": "stead",
+        "curatorJournal": "curatorJournal",
+        "contractorDocumentsPackageJournal": "contractorDocumentsPackageJournal",
+        "innovationTechnologies": "innovationTechnologies",
+        "linkedObjects": "linkedObjects",
+        "objectUuids": "objectUuids",
+        "bp": "bp",
+        "history": "history",
+        "main": "main",
+        "realizeInfo": "realizeInfo",
+        "brightness_percent": "brightness_percent"
+    },
+    "MAPPING_FILENAME": {
+        "NestedEntity": "nestedEntityType",
+        "ObjectOfControl": "controlObjectType"
+    },
+    "MAPPING_MANiFEST": {
+        "ObjectOfControl": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ConfigurationManifest>\n<ConfigItems type=\"User\">\n\n    <DirectoryConfigItem id=\"controlObjectType\">\n      <Directory>/controlObjectType</Directory>\n      <Export>\n        <Type name=\"ControlObjectType\" exportPolicy=\"OneFile\"/>\n      </Export>\n    </DirectoryConfigItem>\n\n\n    <DirectoryConfigItem id=\"metaEntitySchema\" dependsOn=\"controlObjectType\">\n      <Directory>/metaEntitySchema</Directory>\n      <Export>\n        <Type name=\"MetaEntitySchema\" exportPolicy=\"OneFile\"/>\n      </Export>\n    </DirectoryConfigItem>\n\n\n    <DirectoryConfigItem id=\"controlObjectTypeData\" dependsOn=\"metaEntitySchema\">\n      <Directory>/controlObjectTypeData</Directory>\n      <Export>\n        <Type name=\"ControlObjectTypeData\" exportPolicy=\"OneFile\"/>\n      </Export>\n    </DirectoryConfigItem>\n\n    <DirectoryConfigItem id=\"dynamicForm\" dependsOn=\"controlObjectTypeData\">\n      <Directory>/dynamicForm</Directory>\n      <Export>\n        <Type name=\"DynamicForm\" exportPolicy=\"OneFile\"/>\n      </Export>\n    </DirectoryConfigItem>\n  </ConfigItems>\n  </ConfigurationManifest>",
+        "NestedEntity": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ConfigurationManifest>\n\n  <ConfigItems type=\"User\">\n\n    <DirectoryConfigItem id=\"nestedEntityType\">\n      <Directory>/nestedEntityType</Directory>\n      <Export>\n        <Type name=\"NestedEntityType\" exportPolicy=\"OneFile\"/>\n      </Export>\n    </DirectoryConfigItem>\n\n\n    <DirectoryConfigItem id=\"metaEntitySchema\" dependsOn=\"nestedEntityType\">\n      <Directory>/metaEntitySchema</Directory>\n      <Export>\n        <Type name=\"MetaEntitySchema\" exportPolicy=\"OneFile\"/>\n      </Export>\n    </DirectoryConfigItem>\n\n\n    <DirectoryConfigItem id=\"nestedEntityTypeData\" dependsOn=\"metaEntitySchema\">\n      <Directory>/nestedEntityTypeData</Directory>\n      <Export>\n        <Type name=\"NestedEntityTypeData\" exportPolicy=\"OneFile\"/>\n      </Export>\n    </DirectoryConfigItem>\n\n    <DirectoryConfigItem id=\"dynamicForm\" dependsOn=\"nestedEntityTypeData\">\n      <Directory>/dynamicForm</Directory>\n      <Export>\n        <Type name=\"DynamicForm\" exportPolicy=\"OneFile\"/>\n      </Export>\n    </DirectoryConfigItem>\n  </ConfigItems>\n\n</ConfigurationManifest>\n"
+    }
+}

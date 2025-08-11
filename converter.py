@@ -9,6 +9,9 @@ from pathlib import Path
 import json
 import sys
 import traceback
+import requests
+import tempfile
+import subprocess
 
 
 def resource_path(relative_path):
@@ -26,6 +29,53 @@ GLOBAL_LIST_FORM_PROP = {}
 GLOBAL_COUNT_ATTRS = []
 GLOBAL_EXTENSIONS = set()
 APP = None
+
+GITHUB_USER = "samsanya-s"
+GITHUB_REPO = "converter_configuration_ETA_to_JET"
+JSON_FILE_URL = f"https://raw.githubusercontent.com/{GITHUB_USER}/{GITHUB_REPO}/main/data.json"
+GITHUB_TOKEN = "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"
+HEADERS = {"Authorization": f"token {GITHUB_TOKEN}"}
+
+
+def get_current_version():
+    if os.path.exists("version.txt"):
+        with open("version.txt", "r", encoding="utf-8") as f:
+            return f.read().strip()
+    return "0.0.0"
+
+def get_latest_release():
+    url = f"https://api.github.com/repos/{GITHUB_USER}/{GITHUB_REPO}/releases/latest"
+
+    r = requests.get(url, timeout=10, headers=HEADERS)
+    r.raise_for_status()
+    return r.json()
+
+def download_file(url, dest):
+    r = requests.get(url, stream=True, timeout=30, headers=HEADERS)
+    r.raise_for_status()
+    with open(dest, "wb") as f:
+        shutil.copyfileobj(r.raw, f)
+
+def update_self(download_url):
+    # print("🔄 Скачиваю новую версию...")
+    tmp_file = os.path.join(tempfile.gettempdir(), "new_version.exe")
+    download_file(download_url, tmp_file)
+
+    current_exe = sys.argv[0]
+    backup_exe = current_exe + ".old"
+
+    os.rename(current_exe, backup_exe)
+    os.rename(tmp_file, current_exe)
+
+    # print("✅ Обновление завершено. Перезапуск...")
+    os.execv(current_exe, sys.argv)
+
+def download_json():
+    # print("📥 Скачиваю актуальный JSON...")
+    r = requests.get(JSON_FILE_URL, timeout=10, headers=HEADERS)
+    r.raise_for_status()
+    with open("data.json", "w", encoding="utf-8") as f:
+        f.write(r.text)
 
 
 def has_user_dictionary_with_code(file_path: str, code: str) -> bool:
