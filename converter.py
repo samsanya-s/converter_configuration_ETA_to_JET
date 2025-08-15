@@ -50,9 +50,8 @@ def get_latest_release():
     r.raise_for_status()
     return r.json()
 
-def download_asset(asset, log):
+def download_asset(asset):
     """Скачивает asset (zip) из приватного репо"""
-    log("Начало скачивания новой версии")
     headers = HEADERS.copy()
     headers["Accept"] = "application/octet-stream"  # важный заголовок
     r = requests.get(asset["url"], headers=headers, stream=True)
@@ -60,30 +59,48 @@ def download_asset(asset, log):
     tmp_zip = os.path.join(tempfile.gettempdir(), "update.zip")
     with open(tmp_zip, "wb") as f:
         shutil.copyfileobj(r.raw, f)
-    log("Новая версия успешно загружена")
     return tmp_zip
 
-def apply_update(zip_path, log):
-    """Распаковывает zip и заменяет текущие файлы"""
-    log("Начало установки новой версии")
+def apply_update(zip_path):
+    """Распаковывает zip, находит exe и _internal, заменяет их"""
     temp_dir = tempfile.mkdtemp()
     with zipfile.ZipFile(zip_path, "r") as zip_ref:
         zip_ref.extractall(temp_dir)
 
-    # Копируем всё из temp_dir в текущую папку
-    for item in os.listdir(temp_dir):
-        s = os.path.join(temp_dir, item)
-        d = os.path.join(os.getcwd(), item)
+    # Находим вложенную папку
+    extracted_items = os.listdir(temp_dir)
+    if len(extracted_items) == 1 and os.path.isdir(os.path.join(temp_dir, extracted_items[0])):
+        temp_dir = os.path.join(temp_dir, extracted_items[0])  # заходим внутрь
 
-        if os.path.isdir(s):
-            if os.path.exists(d):
-                shutil.rmtree(d)
-            shutil.copytree(s, d)
-        else:
-            shutil.copy2(s, d)
+    # Находим exe внутри распакованного архива
+    exe_source = None
+    for root, _, files in os.walk(temp_dir):
+        for file in files:
+            if file.lower().endswith(".exe"):
+                exe_source = os.path.join(root, file)
+                break
+        if exe_source:
+            break
 
-    shutil.rmtree(temp_dir)
-    log("Новая версия успешно установлена")
+    if not exe_source:
+        raise Exception("❌ Не найден exe в архиве!")
+
+    # Путь к текущему exe
+    exe_target = sys.argv[0]
+
+    # Копируем exe под текущим именем
+    shutil.copy2(exe_source, exe_target)
+
+    # Копируем папку _internal (если есть)
+    internal_src = os.path.join(temp_dir, "_internal")
+    if os.path.exists(internal_src):
+        internal_dst = os.path.join(os.getcwd(), "_internal")
+        if os.path.exists(internal_dst):
+            shutil.rmtree(internal_dst)
+        shutil.copytree(internal_src, internal_dst)
+
+    # Чистим временную папку
+    shutil.rmtree(os.path.dirname(zip_path), ignore_errors=True)
 
 def download_json():
     print("📥 Скачиваю актуальный JSON...")
@@ -1076,15 +1093,23 @@ class SimpleApp:
             if latest_version != current_version:
                 result = self.open_dialog_window("Новая версия", "Доступна новая версия установить?", latest_release["body"])
                 if result:
-                    zip_path = download_asset(asset_zip, self.log)
-                    apply_update(zip_path, self.log)
+                    self.log("Начало скачивания новой версии")
+                    self.root.update_idletasks()
+                    zip_path = download_asset(asset_zip)
 
+                    self.log("Новая версия успешно загружена")
+                    self.log("Начало установки новой версии")
+                    self.root.update_idletasks()
+                    apply_update(zip_path)
+                    self.log("Новая версия успешно установлена")
+                    self.root.update_idletasks()
                     # Обновляем версию
                     with open("version.txt", "w", encoding="utf-8") as f:
                         f.write(latest_version)
                     self.log("Обновление завершено. Перезапуск...", "green")
+                    self.root.update_idletasks()
                     
-                    os.execv(sys.executable, [sys.executable] + sys.argv)
+                    os.execv(sys.argv[0], sys.argv)
             else:
                 self.log("У вас последняя версия программы")
         except Exception as e:
