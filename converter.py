@@ -11,7 +11,8 @@ import sys
 import traceback
 import requests
 import tempfile
-import subprocess
+import zipfile
+import time
 
 
 def resource_path(relative_path):
@@ -45,34 +46,49 @@ def get_current_version():
 
 def get_latest_release():
     url = f"https://api.github.com/repos/{GITHUB_USER}/{GITHUB_REPO}/releases/latest"
-
-    r = requests.get(url, timeout=10, headers=HEADERS)
+    r = requests.get(url, headers=HEADERS, timeout=10)
     r.raise_for_status()
     return r.json()
 
-def download_file(url, dest):
-    r = requests.get(url, stream=True, timeout=30, headers=HEADERS)
+def download_asset(asset, log):
+    """Скачивает asset (zip) из приватного репо"""
+    log("Начало скачивания новой версии")
+    headers = HEADERS.copy()
+    headers["Accept"] = "application/octet-stream"  # важный заголовок
+    r = requests.get(asset["url"], headers=headers, stream=True)
     r.raise_for_status()
-    with open(dest, "wb") as f:
+    tmp_zip = os.path.join(tempfile.gettempdir(), "update.zip")
+    with open(tmp_zip, "wb") as f:
         shutil.copyfileobj(r.raw, f)
+    log("Новая версия успешно загружена")
+    return tmp_zip
 
-def update_self(download_url):
-    # print("🔄 Скачиваю новую версию...")
-    tmp_file = os.path.join(tempfile.gettempdir(), "new_version.exe")
-    download_file(download_url, tmp_file)
+def apply_update(zip_path, log):
+    """Распаковывает zip и заменяет текущие файлы"""
+    log("Начало установки новой версии")
+    temp_dir = tempfile.mkdtemp()
+    with zipfile.ZipFile(zip_path, "r") as zip_ref:
+        zip_ref.extractall(temp_dir)
 
-    current_exe = sys.argv[0]
-    backup_exe = current_exe + ".old"
+    # Копируем всё из temp_dir в текущую папку
+    for item in os.listdir(temp_dir):
+        s = os.path.join(temp_dir, item)
+        d = os.path.join(os.getcwd(), item)
 
-    os.rename(current_exe, backup_exe)
-    os.rename(tmp_file, current_exe)
+        if os.path.isdir(s):
+            if os.path.exists(d):
+                shutil.rmtree(d)
+            shutil.copytree(s, d)
+        else:
+            shutil.copy2(s, d)
 
-    # print("✅ Обновление завершено. Перезапуск...")
-    os.execv(current_exe, sys.argv)
+    shutil.rmtree(temp_dir)
+    log("Новая версия успешно установлена")
 
 def download_json():
-    # print("📥 Скачиваю актуальный JSON...")
-    r = requests.get(JSON_FILE_URL, timeout=10, headers=HEADERS)
+    print("📥 Скачиваю актуальный JSON...")
+    url = f"https://raw.githubusercontent.com/{GITHUB_USER}/{GITHUB_REPO}/main/data.json"
+    r = requests.get(url, headers=HEADERS, timeout=10)
     r.raise_for_status()
     with open("data.json", "w", encoding="utf-8") as f:
         f.write(r.text)
@@ -971,11 +987,64 @@ def main(input_form:str, input_schema:str, output_directory:str, old_code:int, i
     APP.log(f"Результаты записаны в:\n {output_form},\n {output_schema},\n {output_type},\n {output_type_data}")
 
 
+class CustomDialog(tk.Toplevel):
+    def __init__(self, parent, title="Диалог", message="Введите текст:", text=""):
+        super().__init__(parent)
+        self.title(title)
+        self.resizable(False, False)
+        self.result = None
+
+        # Сообщение
+        tk.Label(self, text=message, wraplength=300).pack(padx=10, pady=10)
+
+        # Многострочное поле
+        self.text_area = scrolledtext.ScrolledText(self, width=40, height=5)
+        self.text_area.insert(tk.END, text)
+        self.text_area.pack(padx=10, pady=5)
+
+        # Кнопки
+        btn_frame = tk.Frame(self)
+        btn_frame.pack(pady=10)
+        tk.Button(btn_frame, text="OK", command=self.on_ok).pack(side="left", padx=5)
+        tk.Button(btn_frame, text="Отмена", command=self.on_cancel).pack(side="left", padx=5)
+
+        self.center_to_parent(parent)
+
+        self.transient(parent)  # Поверх родительского окна
+        self.grab_set()         # Захват фокуса
+        parent.wait_window(self)
+
+    def center_to_parent(self, parent):
+        """Расположить окно по центру родителя."""
+        self.update_idletasks()
+        parent_x = parent.winfo_x()
+        parent_y = parent.winfo_y()
+        parent_w = parent.winfo_width()
+        parent_h = parent.winfo_height()
+
+        win_w = self.winfo_width()
+        win_h = self.winfo_height()
+
+        x = parent_x + (parent_w // 2) - (win_w // 2)
+        y = parent_y + (parent_h // 2) - (win_h // 2)
+
+        self.geometry(f"{win_w}x{win_h}+{x}+{y}")
+
+    def on_ok(self):
+        self.result = self.text_area.get("1.0", tk.END).strip()
+        self.destroy()
+
+    def on_cancel(self):
+        self.result = None
+        self.destroy()
+
+
 class SimpleApp:
     SAVED_FILE = "saved.json"
     # HISTORY_FILE = "history.json"
     PATH_TO_DICT = None
     path_to_in_dict = None
+    
     def __init__(self, root=None):
         self.root = root or tk.Tk()
         self.root.title("Конвертер конфигураций ОК и ВлС со второго Эталона на третий")
@@ -986,8 +1055,44 @@ class SimpleApp:
         if len(self.get_dir2()):
             self.create_paths()
         self.PATH_TO_DICT = self.get_dir2() + "\\dicts\\userDictionary\\userDictionary.xml"
+        self.check_update()
+    
+    def check_update(self):
+        current_version = get_current_version()
+        try:
+            latest_release = get_latest_release()
+            latest_version = latest_release["tag_name"]
+
+            asset_zip = None
+            for asset in latest_release["assets"]:
+                if asset["name"].endswith(".zip"):
+                    asset_zip = asset
+                    break
+
+            if not asset_zip:
+                self.log("Ошибка: найден некорректный релиз")
+                return
+
+            if latest_version != current_version:
+                result = self.open_dialog_window("Новая версия", "Доступна новая версия установить?", latest_release["body"])
+                if result:
+                    zip_path = download_asset(asset_zip, self.log)
+                    apply_update(zip_path, self.log)
+
+                    # Обновляем версию
+                    with open("version.txt", "w", encoding="utf-8") as f:
+                        f.write(latest_version)
+                    self.log("Обновление завершено. Перезапуск...", "green")
+                    
+                    os.execv(sys.executable, [sys.executable] + sys.argv)
+            else:
+                self.log("У вас последняя версия программы")
+        except Exception as e:
+            self.log(f"Не удалось проверить обновления: {e}")
         
-        
+    def open_dialog_window(self, title, message, text):
+        dlg = CustomDialog(self.root, title, message, text)
+        return dlg.result
 
     def create_widgets(self):
         # Директория 1
@@ -1076,12 +1181,6 @@ class SimpleApp:
             messagebox.showwarning("Нет файла", "Файл не выбран")
             return
         num = int(selected.split("№ ")[1])
-
-        # APP.log(filename)
-
-        # self.processed_files.add(filename)
-        # self.save_history()
-        # self.update_file_list()
         in_directory = self.get_dir1()
         out_directory = self.get_dir2()
         in_f = os.path.join(in_directory, f'objectType{num}.xml')
@@ -1124,15 +1223,12 @@ class SimpleApp:
 
     def load_config(self):
         if os.path.exists(resource_path(self.SAVED_FILE)):
-            # self.log(self.SAVED_FILE)
             
             with open(resource_path(self.SAVED_FILE), "r", encoding="utf-8") as f:
                 config = json.load(f)
                 self.set_dir1(config.get("dir1", ""))
                 self.update_file_list()
                 self.set_dir2(config.get("dir2", ""))
-            # self.log(self.get_dir1())
-            # self.log(self.get_dir2())
     
     def update_file_list(self):
         dir1 = self.get_dir1()
@@ -1150,11 +1246,9 @@ class SimpleApp:
                 with open(resource_path(full_path), "r", encoding="utf-8") as curr_f:
                     old_form = curr_f.read()
                     type_ent = ET.fromstring(old_form).tag
-                # print(type_ent)
+
                 name_ent = 'NestedEntity' if type_ent == 'BaseListDTO' else 'ObjectOfControl'
-                # if f in self.processed_files:
-                #     display_files.append(f"✓ {name_ent} № {str(f)[10:-4]}")
-                # else:
+
                 display_files.append(f"{name_ent} № {str(f)[10:-4]}")
 
             self.file_combobox["values"] = display_files
@@ -1162,23 +1256,6 @@ class SimpleApp:
                 self.file_combobox.current(0)
         else:
             self.file_combobox["values"] = []
-
-    # def load_history(self):
-    #     if os.path.exists(self.HISTORY_FILE):
-    #         with open(self.HISTORY_FILE, "r", encoding="utf-8") as f:
-    #             return set(json.load(f))
-    #     return set()
-
-    # def save_history(self):
-    #     with open(self.HISTORY_FILE, "w", encoding="utf-8") as f:
-    #         json.dump(list(self.processed_files), f)
-    
-    # def clear_history(self):
-    #     self.processed_files.clear()
-    #     if os.path.exists(self.HISTORY_FILE):
-    #         os.remove(self.HISTORY_FILE)
-    #     self.update_file_list()
-    #     self.log("История обработанных файлов очищена", color="red")
 
 
 if __name__ == '__main__':
