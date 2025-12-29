@@ -179,6 +179,7 @@
                 "descriptionRequired",
                 "false"
             ],
+
             "New": [],
             "toForm": [
                 "ShowDescription"
@@ -305,7 +306,7 @@
         "BooleanDDT": "CommonItem",
         "ResourceLinkDictDDT": "DropDownItem",
         "DecimalDDT": "CommonItem",
-        "DateTimeDDT": "DateTimeInput",
+        "DateTimeDDT": "CommonItem",
         "ResourceLinkDDT": "AutoCompleteInputItem",
         "AttachmentListDDT": "AttachmentItem",
         "URLDDT": "URLInputItem",
@@ -363,14 +364,20 @@
         "Documents": "documents",
         "ControlObject": "object-of-control",
         "Contragent": "contragent",
-        "NestedEntity": "nested-entity-type"
+        "Project": "project",
+        "NestedEntity": "nested-entity-type",
+        "ObjectOfControlContract": "contract",
+        "ContractWorkType": "work-type"
     },
     "MAPPING_JOURNALS": {
         "user": "AccessGroupEmployeeJournal",
         "labor": "LaborJournal",
         "object-of-control": "ObjectOfControlJournal",
         "contragent": "ContragentsJournal",
-        "nested-entity-type": "NestedEntityTypesJournal"
+        "project": "ProjectJournal",
+        "nested-entity-type": "NestedEntityTypesJournal",
+        "contract": "ControlObjectContractsJournalPanel",
+        "work-type": "WorkTypeJournal"
     },
     "MAPPING_FUNCTIONAL_TAB": {
         "mainForCustom": "mainForCustom",
@@ -408,7 +415,8 @@
         "history": "history",
         "main": "main",
         "realizeInfo": "realizeInfo",
-        "brightness_percent": "brightness_percent"
+        "brightness_percent": "brightness_percent",
+        "LinkedObjectsTab": "linkedObjects"
     },
     "MAPPING_FILENAME": {
         "NestedEntity": "nestedEntityType",
@@ -417,5 +425,38 @@
     "MAPPING_MANiFEST": {
         "ObjectOfControl": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ConfigurationManifest>\n<ConfigItems type=\"User\">\n\n    <DirectoryConfigItem id=\"controlObjectType\">\n      <Directory>/controlObjectType</Directory>\n      <Export>\n        <Type name=\"ControlObjectType\" exportPolicy=\"OneFile\"/>\n      </Export>\n    </DirectoryConfigItem>\n\n\n    <DirectoryConfigItem id=\"metaEntitySchema\" dependsOn=\"controlObjectType\">\n      <Directory>/metaEntitySchema</Directory>\n      <Export>\n        <Type name=\"MetaEntitySchema\" exportPolicy=\"OneFile\"/>\n      </Export>\n    </DirectoryConfigItem>\n\n\n    <DirectoryConfigItem id=\"controlObjectTypeData\" dependsOn=\"metaEntitySchema\">\n      <Directory>/controlObjectTypeData</Directory>\n      <Export>\n        <Type name=\"ControlObjectTypeData\" exportPolicy=\"OneFile\"/>\n      </Export>\n    </DirectoryConfigItem>\n\n    <DirectoryConfigItem id=\"dynamicForm\" dependsOn=\"controlObjectTypeData\">\n      <Directory>/dynamicForm</Directory>\n      <Export>\n        <Type name=\"DynamicForm\" exportPolicy=\"OneFile\"/>\n      </Export>\n    </DirectoryConfigItem>\n  </ConfigItems>\n  </ConfigurationManifest>",
         "NestedEntity": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ConfigurationManifest>\n\n  <ConfigItems type=\"User\">\n\n    <DirectoryConfigItem id=\"nestedEntityType\">\n      <Directory>/nestedEntityType</Directory>\n      <Export>\n        <Type name=\"NestedEntityType\" exportPolicy=\"OneFile\"/>\n      </Export>\n    </DirectoryConfigItem>\n\n\n    <DirectoryConfigItem id=\"metaEntitySchema\" dependsOn=\"nestedEntityType\">\n      <Directory>/metaEntitySchema</Directory>\n      <Export>\n        <Type name=\"MetaEntitySchema\" exportPolicy=\"OneFile\"/>\n      </Export>\n    </DirectoryConfigItem>\n\n\n    <DirectoryConfigItem id=\"nestedEntityTypeData\" dependsOn=\"metaEntitySchema\">\n      <Directory>/nestedEntityTypeData</Directory>\n      <Export>\n        <Type name=\"NestedEntityTypeData\" exportPolicy=\"OneFile\"/>\n      </Export>\n    </DirectoryConfigItem>\n\n    <DirectoryConfigItem id=\"dynamicForm\" dependsOn=\"nestedEntityTypeData\">\n      <Directory>/dynamicForm</Directory>\n      <Export>\n        <Type name=\"DynamicForm\" exportPolicy=\"OneFile\"/>\n      </Export>\n    </DirectoryConfigItem>\n  </ConfigItems>\n\n</ConfigurationManifest>\n"
+    },
+    "MAPPING_SYSTEM_FIELDS": {
+        "OOCCode": "<CommonItem code='tab1_section1_field5' formItemType='TextInput' indentLevel='0' isEnabled='true' isService='false' name='Код объекта' sourceType='EXTERNAL' target='FORM'>\n            <Parameter key='maxRows' value='1'/>\n            <Parameter key='externalSourceType' value='ControlObjectField'/>\n            <Parameter key='externalSourceValue' value='code'/>\n          </CommonItem>",
+        "OOCShortName": "<CommonItem code='tab1_section1_field6' formItemType='TextInput' indentLevel='0' isEnabled='true' isService='false' name='Краткое наименование' sourceType='EXTERNAL' target='FORM'>\n            <Parameter key='maxRows' value='1'/>\n            <Parameter key='externalSourceType' value='ControlObjectField'/>\n            <Parameter key='externalSourceValue' value='shortName'/>\n          </CommonItem>",
+        "OOCFullName": "<CommonItem code='tab1_section2_field3' formItemType='TextInput' indentLevel='0' isEnabled='true' isRequired='false' isService='false' name='Полное наименование' sourceType='EXTERNAL' target='ENTITY_PAGE,FORM'>\n            <Parameter key='maxRows' value='1'/>\n            <Parameter key='externalSourceType' value='ControlObjectField'/>\n            <Parameter key='externalSourceValue' value='fullName'/>\n          </CommonItem>",
+        "OOCProject": "<AutoCompleteInputItem code='tab1_section2_field5' formItemType='SingleAutoCompleteInput' indentLevel='0' isEnabled='true' isRequired='false' isService='false' name='Проект' sourceType='EXTERNAL' target='ENTITY_PAGE,FORM'>\n            <Parameter key='journalCode' value='ObjectOfControlProjectsJournal'/>\n            <Parameter key='externalSourceType' value='ControlObjectField'/>\n            <Parameter key='externalSourceValue' value='objectOfControlProject'/>\n          </AutoCompleteInputItem>",
+        "OOCTargetCategoryPlace": "<PlacementTargetItem code='tab1_section2_field11' formItemType='PlacementTarget' indentLevel='0' isEnabled='true' isRequired='false' isService='false' name='Родительские объекты наблюдения' sourceType='EXTERNAL' target='ENTITY_PAGE,FORM'>\n            <Parameter key='externalSourceType' value='ControlObjectField'/>\n            <Parameter key='externalSourceValue' value='targetPlacements'/>\n          </PlacementTargetItem>",
+        "OOCCost": "<CommonItem code='tab1_section2_field18' formItemType='NumberInput' indentLevel='0' isEnabled='true' isService='false' name='Стоимость' sourceType='EXTERNAL' target='ENTITY_PAGE,FORM'>\n            <Parameter key='externalSourceType' value='ControlObjectField'/>\n            <Parameter key='externalSourceValue' value='cost'/>\n          </CommonItem>",
+        "OOCCurator": "<AutoCompleteInputItem code='tab1_section2_field13' formItemType='SingleAutoCompleteInput' indentLevel='0' isEnabled='true' isService='false' name='Куратор' sourceType='EXTERNAL' target='ENTITY_PAGE,FORM'>\n            <Parameter key='journalCode' value='EmployeeJournal'/>\n            <Parameter key='externalSourceType' value='ControlObjectField'/>\n            <Parameter key='externalSourceValue' value='curator'/>\n          </AutoCompleteInputItem>",
+        "OOCPeriod": "<CommonItem code='tab1_section2_field17' formItemType='DateRangeInput' indentLevel='0' isEnabled='true' isService='false' name='Сроки выполнения' sourceType='EXTERNAL' target='ENTITY_PAGE,FORM'>\n            <Parameter key='externalSourceType' value='ControlObjectField'/>\n            <Parameter key='externalSourceValue' value='period'/>\n          </CommonItem>",
+        "OOCWorkContent": "<AutoCompleteInputItem code='tab1_section2_field4' formItemType='SingleAutoCompleteInput' indentLevel='0' isEnabled='true' isService='false' name='Характер работ' sourceType='EXTERNAL' target='ENTITY_PAGE,FORM'>\n            <Parameter key='journalCode' value='WorkContentJournal'/>\n            <Parameter key='externalSourceType' value='ControlObjectField'/>\n            <Parameter key='externalSourceValue' value='workContent'/>\n          </AutoCompleteInputItem>",
+        "OOCLocation": "<CommonItem code='tab3_section1_field5' formItemType='TextInput' indentLevel='0' isEnabled='true' isRequired='false' isService='false' name='Месторасположение объекта' sourceType='EXTERNAL' target='ENTITY_PAGE,FORM'><Parameter key='maxRows' value='1'/><Parameter key='externalSourceType' value='ControlObjectField'/><Parameter key='externalSourceValue' value='location'/></CommonItem>",
+        "OOCOKTMO": "<AutoCompleteInputItem code='tab3_section1_field7' formItemType='MultiAutoCompleteInput' indentLevel='0' isEnabled='true' isRequired='false' isService='false' name='ОКТМО' sourceType='EXTERNAL' target='ENTITY_PAGE,FORM'><Parameter key='journalCode' value='OKTMOJournal'/><Parameter key='externalSourceType' value='ControlObjectField'/><Parameter key='externalSourceValue' value='oktmo'/></AutoCompleteInputItem>",
+        "OOCObjectValue": "<DropDownItem code='tab3_section1_field8' displayType='name' formItemType='SingleDictionarySelectForm' indentLevel='0' isEnabled='true' isRequired='false' isService='false' name='Значение объекта' sourceType='EXTERNAL' target='ENTITY_PAGE,FORM'><Parameter key='dictionaryType' value='ControlObjectValue'/><Parameter key='externalSourceType' value='ControlObjectField'/><Parameter key='externalSourceValue' value='objectValue'/></DropDownItem>",
+        "OOCResponsible": "<AutoCompleteInputItem code='tab3_section1_field14' formItemType='MultiAutoCompleteInput' indentLevel='0' isEnabled='true' isRequired='false' isService='false' name='Ответственный' sourceType='EXTERNAL' target='ENTITY_PAGE,FORM'><Parameter key='journalCode' value='EmployeeJournal'/><Parameter key='externalSourceType' value='ControlObjectField'/><Parameter key='externalSourceValue' value='responsible'/></AutoCompleteInputItem>",
+        "OOCCustomer": "<AutoCompleteInputItem code='tab3_section1_field15' formItemType='SingleAutoCompleteInput' indentLevel='0' isEnabled='true' isRequired='false' isService='false' name='Заказчик' sourceType='EXTERNAL' target='ENTITY_PAGE,FORM'><Parameter key='journalCode' value='ContragentsJournal'/><Parameter key='externalSourceType' value='ControlObjectField'/><Parameter key='externalSourceValue' value='customer'/></AutoCompleteInputItem>",
+        "OOCGenContractor": "<AutoCompleteInputItem code='tab3_section1_field16' formItemType='SingleAutoCompleteInput' indentLevel='0' isEnabled='true' isRequired='false' isService='false' name='Ген. подрядчик' sourceType='EXTERNAL' target='ENTITY_PAGE,FORM'><Parameter key='journalCode' value='ContragentsJournal'/><Parameter key='externalSourceType' value='ControlObjectField'/><Parameter key='externalSourceValue' value='genContractor'/></AutoCompleteInputItem>",
+        "OOCGeoData": "<GeoDataItem code='tab3_section1_field12' formItemType='GeoData' indentLevel='0' isEnabled='true' isService='false' name='Объект на карте' sourceType='EXTERNAL' target='ENTITY_PAGE,FORM'><Parameter key='externalSourceType' value='ControlObjectField'/><Parameter key='externalSourceValue' value='mapMarks'/></GeoDataItem>"
+    },
+    "REQUIRED_SYSTEM_FIELDS": ["OOCCost", "OOCCurator", "OOCPeriod", "OOCShortName"],
+    "MAPPING_EXTENSIONS": {
+        "OOCProject": "businessLine",
+        "OOCWorkContent": "businessLine"
+    },
+    "MAPPING_TRANSIENT_ITEM": {
+        "OOCTypeCustom": "return ControlObject.MainInfo.controlObjectType['name']"
+    },
+    "SYSTEM_DICTIONARY": [
+        "code", "ObjectMapStatus", "DocumentWorkflowStatus", "DocumentRoleFilterItems", "DocumentApprovalType", "DocumentAgreeDefaultType", "DictionaryType", "DocumentResolutionStatus", "ResolutionRoleFilterItems", "LaborSource", "LaborElongateRequestStatus", "LaborEntityLinkFilterItems", "JournalPackage", "WidgetTextColorType", "BaseColorPalette", "ChartAverageCalculationMethod", "KanbanBoardAccessLevel", "SQLReportDataSource", "EntitiesForSQLReport", "ScaleType", "mapSearchEngine", "BaseReportType", "OrgUnitTimezone", "IsFavouriteFilterItems", "HasHasNotFilterItems", "ProcessSystemStatus", "LaborStatus", "LaborComplexity", "LaborPriority", "LaborResponsibility", "LaborReportStatus", "LaborReportResultType", "LaborInterruptReason", "LaborToLaborLinkType", "ReminderRuleType", "TimeDependencyLaborLinkType", "LaborDelegatingType", "LaborIndicators", "LaborReportType", "JournalType", "TransitionWidgetTextColorType", "TextDirection", "UserTriggerField", "Protocol", "DocumentCommentStatus", "SystemEventType", "BackgroundOperationType", "ViewColumnTypes", "ViewFilterTypes", "ControlObjectTypeField", "ControlObjectTypeExtension", "IsViewedPublicationFilterItems", "InformationRegistryPublicationStatus", "InformationRegistryPublicationType", "BackgroundTaskState", "LevelOKTMO", "LaborToObjectOfControlLinkType", "IsExpiredFilterItems", "IsViewedFilterItems", "OnlyRootTasksFilterItems", "ElongateRequestFilterItems", "ReportPhase", "SimpleType", "EntityType", "OKTMOStatus", "StructureRole", "ContragentStatus", "ContragentStatusForPhysical", "ContragentEventStatus", "ContragentEventType", "ControlObjectStatus", "04", "06", "07", "08", "PurchaseType", "RealizeInfoAuctionStageWorkType", "ExpertiseDocumentType", "ProjectNetworkVersionStatus", "ControlObjectCompletion", "FileLinkSource", "AttributeDataType", "MetaEntityStatus", "DocumentStatusType", "DocumentUserViewStatusFilterItems", "DocumentViewedCheckStatus", "DocumentReestrTypeFilterItems", "DocumentIsViewedFilterItems", "DocumentResolutionFilterItems", "DocumentCategory", "DocumentDocCategories", "DocumentDocCategoryFilterItems", "DocumentUserApprovalStatus", "DocOriginal", "DocumentDocOriginalFilterItems", "LegalPersonType", "IsImportantFilterItems", "SimpleBoolean", "YASimpleBoolean", "DictionaryOrderField", "WorkStatus", "ExpensesType", "guaranty-type", "competition-status", "ContractStatus", "ContractRealizationType", "NationalContractMode", "ContractPaymentType", "ContractFulfillmentActState", "PlanSynchronizationStatus", "SynchronizationStatus", "DiagnosticLaunchState", "DiagnosticLaunchMode", "DiagnosticProblemActionType", "WidgetFontSize", "DiagramDataLabelLinePosition", "DiagramDataLabelColumnPosition", "DiagramDataLabelFontSize", "TransitionWidgetTextPosition", "TextAlignType", "TransitionWidgetBackgroundColorType", "IndicatorType", "MonitoringLegendPosition", "BooleanValue", "ScaleIntervalType", "ScaleCalculationRuleType", "DiagramDataLabelDirection", "ChartPointLabelsType",
+        "WidgetLayer"
+    ],
+    "MAPPING_REPORT_UUID": {
+        "26A40B1B-BED1-43E3-B75E-24473C3D4700": "b24f1185-18e6-4ef9-8d08-4aa68138cafc"
     }
 }

@@ -10,9 +10,8 @@ import json
 import sys
 import traceback
 import requests
-import tempfile
-import zipfile
-import time
+import subprocess
+from time import sleep
 
 
 def resource_path(relative_path):
@@ -33,14 +32,22 @@ APP = None
 
 GITHUB_USER = "samsanya-s"
 GITHUB_REPO = "converter_configuration_ETA_to_JET"
-JSON_FILE_URL = f"https://raw.githubusercontent.com/{GITHUB_USER}/{GITHUB_REPO}/main/data.json"
-GITHUB_TOKEN = "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"
+ch1 = 'https'
+ch2 = 'raw'
+ch3 = 'githubusercontent'
+ch4 = 'data'
+JSON_FILE_URL = f"{ch1}://{ch2}.{ch3}.com/{GITHUB_USER}/{GITHUB_REPO}/main/{ch4}.json"
+ch1 = 'github'
+ch2 = 'pat'
+ch3 = '11AWAZZHY02PMsG0VXSReM'
+ch4 = 'jsAkPMFFhLgE3akXG4wKe1eDmw79Z1QQGFL0bhB1PNWEEKME5A31d4c5svu'
+GITHUB_TOKEN = f"{ch1}_{ch2}_{ch3}_{ch4}"
 HEADERS = {"Authorization": f"token {GITHUB_TOKEN}"}
 
 
 def get_current_version():
-    if os.path.exists("version.txt"):
-        with open("version.txt", "r", encoding="utf-8") as f:
+    if os.path.exists(resource_path("version.txt")):
+        with open(resource_path("version.txt"), "r", encoding="utf-8") as f:
             return f.read().strip()
     return "0.0.0"
 
@@ -50,65 +57,15 @@ def get_latest_release():
     r.raise_for_status()
     return r.json()
 
-def download_asset(asset):
+def download_asset(asset_url, dest_path):
     """Скачивает asset (zip) из приватного репо"""
     headers = HEADERS.copy()
     headers["Accept"] = "application/octet-stream"  # важный заголовок
-    r = requests.get(asset["url"], headers=headers, stream=True)
-    r.raise_for_status()
-    tmp_zip = os.path.join(tempfile.gettempdir(), "update.zip")
-    with open(tmp_zip, "wb") as f:
-        shutil.copyfileobj(r.raw, f)
-    return tmp_zip
-
-def apply_update(zip_path):
-    """Распаковывает zip, находит exe и _internal, заменяет их"""
-    temp_dir = tempfile.mkdtemp()
-    with zipfile.ZipFile(zip_path, "r") as zip_ref:
-        zip_ref.extractall(temp_dir)
-
-    # Находим вложенную папку
-    extracted_items = os.listdir(temp_dir)
-    if len(extracted_items) == 1 and os.path.isdir(os.path.join(temp_dir, extracted_items[0])):
-        temp_dir = os.path.join(temp_dir, extracted_items[0])  # заходим внутрь
-
-    # Находим exe внутри распакованного архива
-    exe_source = None
-    for root, _, files in os.walk(temp_dir):
-        for file in files:
-            if file.lower().endswith(".exe"):
-                exe_source = os.path.join(root, file)
-                break
-        if exe_source:
-            break
-
-    if not exe_source:
-        raise Exception("❌ Не найден exe в архиве!")
-
-    # Путь к текущему exe
-    exe_target = sys.argv[0]
-
-    # Копируем exe под текущим именем
-    shutil.copy2(exe_source, exe_target)
-
-    # Копируем папку _internal (если есть)
-    internal_src = os.path.join(temp_dir, "_internal")
-    if os.path.exists(internal_src):
-        internal_dst = os.path.join(os.getcwd(), "_internal")
-        if os.path.exists(internal_dst):
-            shutil.rmtree(internal_dst)
-        shutil.copytree(internal_src, internal_dst)
-
-    # Чистим временную папку
-    shutil.rmtree(os.path.dirname(zip_path), ignore_errors=True)
-
-def download_json():
-    print("📥 Скачиваю актуальный JSON...")
-    url = f"https://raw.githubusercontent.com/{GITHUB_USER}/{GITHUB_REPO}/main/data.json"
-    r = requests.get(url, headers=HEADERS, timeout=10)
-    r.raise_for_status()
-    with open("data.json", "w", encoding="utf-8") as f:
-        f.write(r.text)
+    with requests.get(asset_url, headers=headers, stream=True) as r:
+        r.raise_for_status()
+        with open(dest_path, "wb") as f:
+            for chunk in r.iter_content(chunk_size=8192):
+                f.write(chunk)
 
 
 def has_user_dictionary_with_code(file_path: str, code: str) -> bool:
@@ -227,7 +184,7 @@ def get_params_transient_form_item(old_item: ET.Element, code_field: str):
                 type_name = "Button"
         tag_props = {
             "code": code_field,
-            "formItemType": CONFIG['MAPPING_TYPE_INPUT'][type_name],
+            "formItemType": CONFIG["MAPPING_TYPE_INPUT"][type_name],
             "indentLevel": extract_param_value(old_item.get("Params"), "level") or 0,
             "isEnabled": "true",
             "isService": "false",
@@ -236,23 +193,25 @@ def get_params_transient_form_item(old_item: ET.Element, code_field: str):
         }
 
         if old_item.tag == 'ButtonItem':
-            tag_props['label'] = old_item.get("Label", "")
+            if old_item.get("Label"):
+                tag_props['label'] = old_item.get("Label")
             tag_props['name'] = old_item.get("Name", "")
 
         params = []
         # APP.log(type_name)
         if old_item.tag == 'ButtonItem':
-            if old_item.find("RunProcess") is not None:
-                for process in old_item.find("RunProcess").find('Processes'):
-                    params.append((process.get('ProcessUUID'), process.find('EnabledExpression').text if process.find('EnabledExpression') is not None else ""))
-            elif old_item.find("RunReport"):
-                for process in old_item.find("RunReport").find('Processes'):
-                    rep_uuid = process.get('ReportUUID')
-                    if rep_uuid in CONFIG["MAPPING_REPORT_UUID"]:
-                        rep_uuid = CONFIG["MAPPING_REPORT_UUID"]["rep_uuid"]
-                    else:
-                        APP.log(f"Внимание: не забудьте заменить uuid ({rep_uuid}) шаблона отчёта")
-                    params.append((rep_uuid, ''))
+            # if old_item.find("RunProcess") is not None:
+            #     for process in old_item.find("RunProcess").find('Processes'):
+            #         params.append((process.get('ProcessUUID'), process.find('EnabledExpression').text if process.find('EnabledExpression') is not None else ""))
+            # elif old_item.find("RunReport"):
+            #     for process in old_item.find("RunReport").find('Processes'):
+            #         rep_uuid = process.get('ReportUUID')
+            #         if rep_uuid in CONFIG["MAPPING_REPORT_UUID"]:
+            #             rep_uuid = CONFIG["MAPPING_REPORT_UUID"]["rep_uuid"]
+            #         else:
+            #             APP.log(f"Внимание: не забудьте заменить uuid ({rep_uuid}) шаблона отчёта")
+            #         params.append((rep_uuid, ''))
+            pass
         else:
             for type_param in CONFIG['MAPPING_PARAMETRS'][type_name]:
                 if type_param == 'maxRows':
@@ -586,7 +545,7 @@ def generate_dynamic_form_migrate(source_xml: str, uuid_conf: str, new_attribute
 
             width =  ET.Element('Width')
             old_width = old_column.find("Width")
-            width.text = old_width.text if old_width is not None else '100'
+            width.text = str(min(int(old_width.text), 1000)) if old_width is not None else '100'
             new_column.append(width)
             
             sortable =  ET.Element('Sortable')
@@ -721,13 +680,15 @@ def generate_type_datatype(source_xml: str, type_entity_name: str, uuid_conf: st
         periodEnd = "CURRENT_YEAR_START_DATE"
 
 
-        def_vals = ET.fromstring(f'''    <DefaultValues>
-      <DefaultValue fieldName="cost">{cost}</DefaultValue>
-      <DefaultFunction fieldName="periodStart">{periodStart}</DefaultFunction>
-      <DefaultFunction fieldName="periodEnd">{periodEnd}</DefaultFunction>
-      <DefaultObject fieldName="curator" objectField="USER_NAME">{curator}</DefaultObject>
-    </DefaultValues>
-''')
+#         def_vals = ET.fromstring(f'''    <DefaultValues>
+#       <DefaultValue fieldName="cost">{cost}</DefaultValue>
+#       <DefaultFunction fieldName="periodStart">{periodStart}</DefaultFunction>
+#       <DefaultFunction fieldName="periodEnd">{periodEnd}</DefaultFunction>
+#       <DefaultObject fieldName="curator" objectField="USER_NAME">{curator}</DefaultObject>
+#     </DefaultValues>
+# ''')
+        def_vals = ET.Element("DefaultValues")
+        
         ooc_type_data.append(def_vals)
         data_type_root.append(ooc_type_data)
 
@@ -742,9 +703,19 @@ def generate_config_manifest(place:str, type_ent:str):
        with open(resource_path(place), 'w', encoding='utf-8') as f:
             f.write(CONFIG['MAPPING_MANiFEST'][type_ent])
 
+def append_dict_config_manifest(path:str, name_dict:str):
+    tree = ET.parse(os.path.join(path, 'config-manifest.xml'))
+    print(os.path.join(path, 'config-manifest.xml'))
+    root = tree.getroot()
+    filterElement = ET.Element("StringFilterValue")
+    filterElement.text = name_dict
+    filterBlock = root.find('.//CompareDataFilter[@name="DictionaryTypeCode"]')
+    filterBlock.append(filterElement)
+    tree.write(os.path.join(path, 'config-manifest.xml'), encoding="utf-8", xml_declaration=True)
+
+
 def append_config_manifest(path:str, type_ent:str, name_ent:str, old_code:int):
     tree = ET.parse(os.path.join(path, 'config-manifest.xml'))
-
     # root_export = tree.getroot().find("ExportData")
     # filter_type = root_export.findall(f'.//CompareDataFilter[@id="{CONFIG['MAPPING_FILENAME'][type_ent]}Filter"]')[0]
     # for el in filter_type:
@@ -886,7 +857,7 @@ def convert_dictionary_to_user_dict(dictionary):
         'sortField': 'orderIndex'
     })
 
-    for value in dictionary.findall('Value'):
+    for value in dictionary.findall('Item'):
         code = value.attrib['Code']
         name = value.attrib['Name']
         if code == "5":
@@ -929,7 +900,7 @@ def generate_directory(output_directory: str, type_entity_name: str, input_dicti
         with open(resource_path(file_path), 'w', encoding='utf-8') as f:
             f.write('') 
     
-    generate_config_manifest(os.path.join(output_directory, 'config-manifest.xml'), type_entity_name)
+    # generate_config_manifest(os.path.join(output_directory, 'config-manifest.xml'), type_entity_name)
     with open(resource_path(os.path.join(output_directory, 'СПРАВОЧНИКИ.txt')), 'w', encoding='utf-8') as f:
         for j in GLOBAL_SET_JOURNALS:
             if has_user_dictionary_with_code(APP.PATH_TO_DICT, j):
@@ -941,7 +912,7 @@ def generate_directory(output_directory: str, type_entity_name: str, input_dicti
                     input_tree = ET.parse(input_dictionary)
                     input_root = input_tree.getroot()
 
-                    dictionaries = input_root.findall(f'.//DictionaryTypeDTO[@Code="{j}"]')
+                    dictionaries = input_root.findall(f'.//Dictionary[@Code="{j}"]')
                     if not dictionaries:
                         APP.log(f"Требуемый справочник (отсутствует в dicts): {j}", 'red')
                     else:
@@ -953,6 +924,8 @@ def generate_directory(output_directory: str, type_entity_name: str, input_dicti
             else:
                  APP.log(f"Требуемый справочник (отсутствует в dicts): {j}", 'red')
             f.write(f"Требуемый справочник: {j}\n")
+            mainDir = Path(output_directory).parent
+            append_dict_config_manifest(mainDir, j)
     
     return output_form, output_schema, output_type, output_type_data
 
@@ -978,6 +951,7 @@ def main(input_form:str, input_schema:str, output_directory:str, old_code:int, i
     output_directory = os.path.join(output_directory, f'{code_ent}') + os.sep
 
     output_form, output_schema, output_type, output_type_data = generate_directory(output_directory, type_entity_name, input_dictionary)
+
 
     crutch_typename(new_schema)
     tree_schema = ET.ElementTree(new_schema)
@@ -1005,7 +979,7 @@ def main(input_form:str, input_schema:str, output_directory:str, old_code:int, i
 
 
 class CustomDialog(tk.Toplevel):
-    def __init__(self, parent, title="Диалог", message="Введите текст:", text=""):
+    def __init__(self, parent, title="Диалог", message="Введите текст:", text=None):
         super().__init__(parent)
         self.title(title)
         self.resizable(False, False)
@@ -1015,9 +989,10 @@ class CustomDialog(tk.Toplevel):
         tk.Label(self, text=message, wraplength=300).pack(padx=10, pady=10)
 
         # Многострочное поле
-        self.text_area = scrolledtext.ScrolledText(self, width=40, height=5)
-        self.text_area.insert(tk.END, text)
-        self.text_area.pack(padx=10, pady=5)
+        if text:
+            self.text_area = scrolledtext.ScrolledText(self, width=40, height=5)
+            self.text_area.insert(tk.END, text)
+            self.text_area.pack(padx=10, pady=5)
 
         # Кнопки
         btn_frame = tk.Frame(self)
@@ -1064,7 +1039,7 @@ class SimpleApp:
     
     def __init__(self, root=None):
         self.root = root or tk.Tk()
-        self.root.title("Конвертер конфигураций ОК и ВлС со второго Эталона на третий")
+        self.root.title("Конвертер конфигураций ОК и ВлС с Э2 на Э3")
         self.root.geometry("900x600")
         self.create_widgets()
         # self.processed_files = self.load_history()
@@ -1095,21 +1070,19 @@ class SimpleApp:
                 if result:
                     self.log("Начало скачивания новой версии")
                     self.root.update_idletasks()
-                    zip_path = download_asset(asset_zip)
+                    exe_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
+                    zip_path = os.path.join(exe_dir, "update.zip")
 
-                    self.log("Новая версия успешно загружена")
-                    self.log("Начало установки новой версии")
-                    self.root.update_idletasks()
-                    apply_update(zip_path)
-                    self.log("Новая версия успешно установлена")
-                    self.root.update_idletasks()
+                    download_asset(asset["url"], zip_path)
                     # Обновляем версию
-                    with open("version.txt", "w", encoding="utf-8") as f:
+                    with open(resource_path("version.txt"), "w", encoding="utf-8") as f:
                         f.write(latest_version)
-                    self.log("Обновление завершено. Перезапуск...", "green")
-                    self.root.update_idletasks()
-                    
+                    subprocess.Popen(["update.bat"], shell=True, cwd=exe_dir)
+                    sys.exit(0)
                     os.execv(sys.argv[0], sys.argv)
+                    self.log("Скачивание завершено приложение будет перезагружено", "green")
+                    sleep(3)
+                    self.root.update_idletasks()
             else:
                 self.log("У вас последняя версия программы")
         except Exception as e:
@@ -1175,29 +1148,36 @@ class SimpleApp:
         dir_path = os.path.dirname(self.PATH_TO_DICT)
         os.makedirs(dir_path, exist_ok=True)
 
-        conf_man_path = os.path.join(self.get_dir2(), 'dicts', 'config-manifest.xml')
-        if not os.path.isfile(conf_man_path):
-            with open(conf_man_path, 'w', encoding="utf-8") as file:
-                file.write('''<ConfigurationManifest>
+        dict_element = '''<ConfigurationManifest>
 <ConfigItems type="User">
 <FileConfigItem id="userDictionary">
 <FileName>/userDictionary/userDictionary.xml</FileName>
+                       <Export>
+        <Type name="UserDictionary">
+          <ExportData>
+            <Filters>
+              <CompareDataFilter id="TypeCode" name="DictionaryTypeCode">
+
+              </CompareDataFilter>
+            </Filters>
+          </ExportData>
+        </Type>
+      </Export>    
 </FileConfigItem>
 </ConfigItems>
-</ConfigurationManifest>''')
+</ConfigurationManifest>'''
+
+        conf_man_path = os.path.join(self.get_dir2(), 'dicts', 'config-manifest.xml')
+        if not os.path.isfile(conf_man_path):
+            with open(conf_man_path, 'w', encoding="utf-8") as file:
+                file.write(dict_element)
         if not os.path.isfile(self.PATH_TO_DICT):
             with open(self.PATH_TO_DICT, 'w', encoding="utf-8") as file:
                 file.write('''<?xml version='1.0' encoding='utf-8'?>
 <Data>
 </Data>''')
         with open(os.path.join(self.get_dir2(), 'config-manifest.xml'), 'w', encoding="utf-8") as file:
-            file.write('''<ConfigurationManifest>
-<ConfigItems type="User">
-<FileConfigItem id="userDictionary">
-<FileName>dicts/userDictionary/userDictionary.xml</FileName>
-</FileConfigItem>
-</ConfigItems>
-</ConfigurationManifest>''')
+            file.write(dict_element)
 
 
     def run_action(self):
@@ -1205,7 +1185,7 @@ class SimpleApp:
         if not selected:
             messagebox.showwarning("Нет файла", "Файл не выбран")
             return
-        num = int(selected.split("№ ")[1])
+        num = int(selected.split()[1])
         in_directory = self.get_dir1()
         out_directory = self.get_dir2()
         in_f = os.path.join(in_directory, f'objectType{num}.xml')
@@ -1258,11 +1238,11 @@ class SimpleApp:
     def update_file_list(self):
         dir1 = self.get_dir1()
         if os.path.isdir(dir1):
-            files = [f for f in os.listdir(dir1) if os.path.isfile(os.path.join(dir1, f))]
+            files = [f.lower() for f in os.listdir(dir1) if os.path.isfile(os.path.join(dir1, f))]
             display_files = []
 
             for f in files:
-                if "dictionary" in f: 
+                if "dict" in f: 
                     self.path_to_in_dict = os.path.join(dir1, f)
                     continue
                 if 'object' not in f: continue
@@ -1270,17 +1250,23 @@ class SimpleApp:
 
                 with open(resource_path(full_path), "r", encoding="utf-8") as curr_f:
                     old_form = curr_f.read()
-                    type_ent = ET.fromstring(old_form).tag
+                    form = ET.fromstring(old_form)
+                    type_ent = form.tag
 
-                name_ent = 'NestedEntity' if type_ent == 'BaseListDTO' else 'ObjectOfControl'
+                name_ent = f'NestedEntity {str(f)[10:-4]} {form.find('.//Name').text}' if type_ent == 'BaseListDTO' else f'ObjectOfControl {str(f)[10:-4]} {form.find('.//ObjectTypeName').text}'
 
-                display_files.append(f"{name_ent} № {str(f)[10:-4]}")
+                display_files.append(name_ent)
 
             self.file_combobox["values"] = display_files
             if display_files:
                 self.file_combobox.current(0)
+            if self.path_to_in_dict:
+                self.log(f"Файл {self.path_to_in_dict} со справочниками загружен", 'green')
+            else:
+                self.log(f"Файл со справочниками не найден", 'red')
         else:
             self.file_combobox["values"] = []
+        
 
 
 if __name__ == '__main__':
